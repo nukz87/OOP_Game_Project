@@ -29,43 +29,17 @@ public class MangoTree {
     }
 
     public void update(float delta, Player player) {
-        // interactArea.x = positionX - 20f; e
-        // interactArea.y = positionY - 20f;
-        // interactArea.height = height + 40f;
-        // interactArea.width = width + 40f;
-
         if (interactArea.overlaps(player.hitbox)) {
             isPlayerInRange = true;
-            if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
-                if (!isWaiting) {
-                    stealProgress += delta;
-                    if (stealProgress >= TIME_TO_STEAL) {
-                        stealProgress = 0;
-                        // isWaiting = true;
-                        player.updateMango();
-                    }
-                }
-            } else {
-                stealProgress = 0f;
-                isWaiting = false;
-            }
         } else {
             isPlayerInRange = false;
-            stealProgress = 0f;
-            isWaiting = false;
         }
+        stealProgress = 0f;
     }
 
     public void render(ShapeRenderer shapeRenderer) {
         shapeRenderer.setColor(Color.YELLOW);
         shapeRenderer.rect(positionX, positionY, width, height);
-
-        shapeRenderer.setColor(Color.GRAY);
-        shapeRenderer.rect(positionX, positionY + height + 5f, width, 3f);
-
-        shapeRenderer.setColor(Color.GREEN);
-        shapeRenderer.rect(positionX, positionY + height + 5f, width * stealProgress / TIME_TO_STEAL, 3f);
-
     }
 
 }
