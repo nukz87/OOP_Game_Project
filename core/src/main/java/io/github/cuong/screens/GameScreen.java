@@ -2,11 +2,9 @@ package io.github.cuong.screens;
 
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -17,6 +15,7 @@ import io.github.cuong.entities.Guard;
 import io.github.cuong.managers.TimeManager;
 import io.github.cuong.objects.MangoTree;
 import io.github.cuong.ui.HUD;
+import io.github.cuong.inventory.controller.InventoryController;
 
 public class GameScreen implements Screen {
     public static final float V_WIDTH = 800f;
@@ -30,6 +29,9 @@ public class GameScreen implements Screen {
     private MangoTree mangoTree;
     private Guard guard;
     private HUD HUD;
+    private InventoryController inventoryController;
+
+    private boolean isInventoryOpen = false;
 
     private final Main game;
 
@@ -50,11 +52,22 @@ public class GameScreen implements Screen {
         mangoTree = new MangoTree(V_WIDTH / 2f, V_HEIGHT / 2f + 40, 30f, 30f);
         guard = new Guard(V_WIDTH / 2f - 200f, V_HEIGHT / 2f);
         HUD = new HUD(V_WIDTH, V_HEIGHT);
+
+        inventoryController = new InventoryController();
     }
 
     @Override
     public void render(float delta) {
-        player.update(delta);
+        if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+            isInventoryOpen = !isInventoryOpen;
+        }
+
+        if (!isInventoryOpen) {
+            player.update(delta);
+        } else {
+            inventoryController.update(delta);
+        }
+
         mangoTree.update(delta, player);
         timeManager.update(delta);
         guard.update(delta, player);
@@ -80,6 +93,10 @@ public class GameScreen implements Screen {
         guard.renderBody(game.shapeRenderer);
         game.shapeRenderer.end();
 
+        if (isInventoryOpen) {
+            inventoryController.render(game.shapeRenderer, game.batch, game.font);
+        }
+
         HUD.renderShapes(game.shapeRenderer, player);
         HUD.renderText(game.batch, game.font, player, timeManager);
     }
@@ -101,6 +118,9 @@ public class GameScreen implements Screen {
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height);
+        if (inventoryController != null) {
+            inventoryController.resize(width, height);
+        }
     }
 
     @Override

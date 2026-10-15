@@ -54,9 +54,9 @@ public class Guard {
         hitbox.setPosition(position.x, position.y);
         detectRange.setPosition(position.x + width / 2f, position.y + height / 2f);
 
-        System.out.println(currentState);
-        System.out.println(position);
-        System.out.println(currentTargetX);
+        // System.out.println(currentState);
+        // System.out.println(position);
+        // System.out.println(currentTargetX);
         // System.out.println(pointA);
         // System.out.println(pointB);
 
