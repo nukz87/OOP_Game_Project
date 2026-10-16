@@ -53,13 +53,36 @@ public class GameScreen implements Screen {
         guard = new Guard(V_WIDTH / 2f - 200f, V_HEIGHT / 2f);
         HUD = new HUD(V_WIDTH, V_HEIGHT);
 
-        inventoryController = new InventoryController();
+        inventoryController = new InventoryController(player);
     }
 
     @Override
     public void render(float delta) {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
-            isInventoryOpen = !isInventoryOpen;
+        mangoTree.update(delta, player);
+
+        if (!isInventoryOpen) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+                isInventoryOpen = true;
+                inventoryController.openInventoryOnly();
+            } else if (mangoTree.isPlayerInRange && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                isInventoryOpen = true;
+                inventoryController.openHarvestMenu();
+            }
+        } else {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+                isInventoryOpen = false;
+                inventoryController.close();
+            } else if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+                if (!inventoryController.isShowTray()) {
+                    isInventoryOpen = false;
+                    inventoryController.close();
+                } else {
+                    inventoryController.openInventoryOnly();
+                }
+            } else if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && inventoryController.isShowTray()) {
+                isInventoryOpen = false;
+                inventoryController.close();
+            }
         }
 
         if (!isInventoryOpen) {
@@ -68,9 +91,13 @@ public class GameScreen implements Screen {
             inventoryController.update(delta);
         }
 
-        mangoTree.update(delta, player);
         timeManager.update(delta);
         guard.update(delta, player);
+
+        if (isInventoryOpen && inventoryController.isShowTray() && !mangoTree.isPlayerInRange) {
+            isInventoryOpen = false;
+            inventoryController.close();
+        }
 
         float lerp = 5.0f; // Tốc độ bám theo của camera
         camera.position.x += (player.position.x - camera.position.x) * lerp * delta;
@@ -99,6 +126,14 @@ public class GameScreen implements Screen {
 
         HUD.renderShapes(game.shapeRenderer, player);
         HUD.renderText(game.batch, game.font, player, timeManager);
+
+        if (!isInventoryOpen && mangoTree.isPlayerInRange) {
+            game.batch.getProjectionMatrix().setToOrtho2D(0, 0, V_WIDTH, V_HEIGHT);
+            game.batch.begin();
+            game.font.setColor(com.badlogic.gdx.graphics.Color.YELLOW);
+            game.font.draw(game.batch, "[SPACE] Hai xoai", V_WIDTH / 2f - 55f, 60f);
+            game.batch.end();
+        }
     }
 
     private void drawDebugGrid() {

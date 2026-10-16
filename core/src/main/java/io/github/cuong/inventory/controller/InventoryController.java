@@ -22,6 +22,7 @@ import io.github.cuong.inventory.model.InventoryTemplates;
 import io.github.cuong.inventory.model.PlacedBlock;
 import io.github.cuong.inventory.view.BoardView;
 import io.github.cuong.inventory.view.ButtonView;
+import io.github.cuong.entities.Player;
 import io.github.cuong.inventory.view.ShapeView;
 import io.github.cuong.inventory.view.TrayView;
 
@@ -39,8 +40,8 @@ public class InventoryController {
     private int currentTemplateIndex = 1; // Khởi đầu với Template Bo 4 góc để thấy rõ khối cố định
 
     // Biến quản lý hiển thị các phân vùng màn chơi
-    private boolean showTray = true;
-    private boolean showBoard = true;
+    private boolean showTray = false;
+    private boolean showBoard = false;
 
     // Biến quản lý kéo-thả: dùng chung cho cả khối từ khay lẫn khối đã đặt
     private ShapeView selectedShapeView;
@@ -50,8 +51,14 @@ public class InventoryController {
     private final Vector3 touchPos = new Vector3();
 
     private boolean isGameOver = false;
+    private Player player;
 
     public InventoryController() {
+        this(null);
+    }
+
+    public InventoryController(Player player) {
+        this.player = player;
         this.camera = new OrthographicCamera();
         this.viewport = new FitViewport(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, camera);
 
@@ -68,6 +75,36 @@ public class InventoryController {
                 GameConfig.BUTTON_X, GameConfig.BUTTON_Y,
                 GameConfig.BUTTON_WIDTH, GameConfig.BUTTON_HEIGHT,
                 "NEXT PIECE");
+    }
+
+    public void setPlayer(Player player) {
+        this.player = player;
+    }
+
+    public void openInventoryOnly() {
+        cancelDrag();
+        this.showBoard = true;
+        this.showTray = false;
+    }
+
+    public void openHarvestMenu() {
+        cancelDrag();
+        this.showBoard = true;
+        this.showTray = true;
+    }
+
+    public void close() {
+        cancelDrag();
+        this.showBoard = false;
+        this.showTray = false;
+    }
+
+    public boolean isShowTray() {
+        return showTray;
+    }
+
+    public boolean isShowBoard() {
+        return showBoard;
     }
 
     private void spawnNextBlock() {
@@ -145,7 +182,11 @@ public class InventoryController {
 
         // Dòng hướng dẫn phím bấm
         font.setColor(new Color(0.7f, 0.7f, 0.8f, 1f));
-        font.draw(batch, "[T / 1-6] Templates   [R] Rotate   [SPACE] All   [E] Board   [ESC] Hide", 15f, 30f);
+        if (showTray) {
+            font.draw(batch, "[T / 1-6] Templates   [R] Rotate   [E] Inventory   [ESC / SPACE] Close", 15f, 30f);
+        } else {
+            font.draw(batch, "[T / 1-6] Templates   [R] Rotate   [E / ESC] Close", 15f, 30f);
+        }
 
         if (isGameOver) {
             font.setColor(Color.RED);
@@ -161,30 +202,7 @@ public class InventoryController {
         float mouseX = touchPos.x;
         float mouseY = touchPos.y;
 
-        // Phím điều khiển hiển thị các phần màn chơi
-        // Phím Space: hiển thị cả hai phần (tray + button và board) và clear tray
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-            cancelDrag();
-            blocksManager.setCurBlock(null);
-            trayView.clear();
-            showBoard = true;
-            showTray = true;
-        }
-        // Phím E: chỉ hiển thị phần board (inventory); nếu đã hiện cả hai phần rồi thì
-        // không làm gì nữa
-        else if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
-            if (!showBoard || !showTray) {
-                cancelDrag();
-                showBoard = true;
-                showTray = false;
-            }
-        }
-        // Phím Esc: không hiển thị phần nào nữa
-        else if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            cancelDrag();
-            showBoard = false;
-            showTray = false;
-        }
+
 
         // Phím đổi template kho đồ (T: chuyển vòng tròn, 1-6: chọn trực tiếp template)
         if (Gdx.input.isKeyJustPressed(Input.Keys.T)) {
@@ -303,6 +321,9 @@ public class InventoryController {
                     if (draggedPlacedBlock == null) {
                         blocksManager.setCurBlock(null);
                         trayView.clear();
+                        if (player != null) {
+                            player.updateMango();
+                        }
                     }
                 } else {
                     // Không đặt được hoặc board không hiển thị → trả về vị trí cũ
