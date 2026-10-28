@@ -73,16 +73,16 @@ public class BlocksManager {
                 { true, true, false }
         };
 
-        shapePool.add(new Blocks(singleDot, Color.PINK));
-        shapePool.add(new Blocks(square2x2, Color.YELLOW));
-        shapePool.add(new Blocks(square3x3, Color.SCARLET));
-        shapePool.add(new Blocks(bar4, Color.CYAN));
-        shapePool.add(new Blocks(col4, Color.CYAN));
-        shapePool.add(new Blocks(bar3, Color.ROYAL));
-        shapePool.add(new Blocks(shapeL, Color.ORANGE));
-        shapePool.add(new Blocks(shapeT, Color.PURPLE));
-        shapePool.add(new Blocks(shapeZ, Color.RED));
-        shapePool.add(new Blocks(shapeS, Color.GREEN));
+        shapePool.add(new Blocks(singleDot, Color.PINK, "single", false));
+        shapePool.add(new Blocks(square2x2, Color.YELLOW, "square2x2", true));
+        shapePool.add(new Blocks(square3x3, Color.SCARLET, "square3x3", false));
+        shapePool.add(new Blocks(bar4, Color.CYAN, "bar4", false));
+        shapePool.add(new Blocks(col4, Color.CYAN, "col4", false));
+        shapePool.add(new Blocks(bar3, Color.ROYAL, "bar3", false));
+        shapePool.add(new Blocks(shapeL, Color.ORANGE, "shapeL", false));
+        shapePool.add(new Blocks(shapeT, Color.PURPLE, "shapeT", false));
+        shapePool.add(new Blocks(shapeZ, Color.RED, "shapeZ", false));
+        shapePool.add(new Blocks(shapeS, Color.GREEN, "shapeS", false));
     }
 
     public void generateCurBlock() {

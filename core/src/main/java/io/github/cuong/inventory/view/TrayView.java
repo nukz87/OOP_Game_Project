@@ -1,6 +1,7 @@
 package io.github.cuong.inventory.view;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import io.github.cuong.inventory.config.GameConfig;
 import io.github.cuong.inventory.model.Blocks;
@@ -45,8 +46,8 @@ public class TrayView {
         return !shapeViews.isEmpty();
     }
 
-    public void draw(ShapeRenderer shapeRenderer) {
-        // 1. Vẽ khung chứa khối gạch
+    // Vẽ nền khay (background) với ShapeRenderer
+    public void drawBackground(ShapeRenderer shapeRenderer) {
         float boxHalf = GameConfig.TRAY_BOX_SIZE / 2f;
         shapeRenderer.setColor(boxBorderColor);
         shapeRenderer.rect(
@@ -60,11 +61,19 @@ public class TrayView {
                 centerY - boxHalf,
                 GameConfig.TRAY_BOX_SIZE,
                 GameConfig.TRAY_BOX_SIZE);
+    }
 
-        // 2. Vẽ khối gạch bên trong khay
+    // Vẽ các khối hình (shapes) với SpriteBatch
+    public void drawShapes(SpriteBatch batch) {
         for (ShapeView sv : shapeViews) {
-            sv.draw(shapeRenderer);
+            sv.draw(batch);
         }
+    }
+
+    // Legacy method for backward compatibility (if needed)
+    public void draw(ShapeRenderer shapeRenderer) {
+        drawBackground(shapeRenderer);
+        // Note: shapes are now drawn with SpriteBatch, not here
     }
 
     public ShapeView getTouchedShape(float mouseX, float mouseY) {

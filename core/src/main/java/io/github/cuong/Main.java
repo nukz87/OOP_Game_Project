@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
+import io.github.cuong.inventory.asset.AssetLoader;
 import io.github.cuong.screens.GameScreen;
 
 public class Main extends Game {
@@ -17,6 +18,12 @@ public class Main extends Game {
 
     @Override
     public void create() {
+        // Initialize asset loader first (generates default textures)
+        AssetLoader assetLoader = AssetLoader.getInstance();
+
+        // Load custom textures from resources
+        assetLoader.loadTexture("square2x2", "assets/textures/shapes/square2x2.png");
+
         shapeRenderer = new ShapeRenderer();
         batch = new SpriteBatch();
         font = new BitmapFont();
@@ -30,5 +37,6 @@ public class Main extends Game {
         shapeRenderer.dispose();
         batch.dispose();
         font.dispose();
+        AssetLoader.getInstance().dispose();
     }
 }
