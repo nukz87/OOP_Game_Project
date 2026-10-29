@@ -127,10 +127,11 @@ public class InventoryController {
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
+        // Draw dark overlay background
         shapeRenderer.setColor(0f, 0f, 0f, 0.6f);
         shapeRenderer.rect(0, 0, GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT);
 
-        // 1. Vẽ bàn cờ / inventory (nếu được bật)
+        // 1. Vẽ bàn cờ / inventory (nếu được bật) - backgrounds and highlights with ShapeRenderer
         if (showBoard) {
             if (selectedShapeView != null) {
                 int hoverRow = getHoverRow(selectedShapeView);
@@ -143,21 +144,32 @@ public class InventoryController {
             }
         }
 
-        // 2. Vẽ phần Tray và nút tạo block (nếu được bật)
+        // 2. Vẽ phần Tray và nút tạo block (nếu được bật) - backgrounds with ShapeRenderer
         if (showTray) {
-            trayView.draw(shapeRenderer);
+            trayView.drawBackground(shapeRenderer);
             nextPieceButton.drawShape(shapeRenderer);
-        }
-
-        // 3. Vẽ khối đang được kéo nằm trên cùng (lớp trên hết)
-        if (selectedShapeView != null) {
-            selectedShapeView.draw(shapeRenderer);
         }
 
         shapeRenderer.end();
 
+        // Draw shapes with SpriteBatch (textures)
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
+
+        // 1. Vẽ các khối trên bàn cờ (placed blocks)
+        if (showBoard) {
+            boardView.drawPlacedBlocks(batch);
+        }
+
+        // 2. Vẽ khối trong khay
+        if (showTray) {
+            trayView.drawShapes(batch);
+        }
+
+        // 3. Vẽ khối đang được kéo nằm trên cùng (lớp trên hết)
+        if (selectedShapeView != null) {
+            selectedShapeView.draw(batch);
+        }
 
         // Vẽ chữ của nút bấm nếu tray & button hiển thị
         if (showTray) {
