@@ -26,6 +26,8 @@ public class HUD {
 
         font.setColor(Color.YELLOW);
         font.draw(batch, "XOAI: " + player.mangoCount, 20, virtualHeight - 65);
+        font.setColor(Color.GOLD);
+        font.draw(batch, "VANG: " + player.gold + " G", 20, virtualHeight - 90);
 
         // Hiển thị ngày và giờ
         font.setColor(Color.CYAN);

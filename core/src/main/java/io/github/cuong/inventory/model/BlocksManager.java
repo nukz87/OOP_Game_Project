@@ -36,53 +36,16 @@ public class BlocksManager {
                 { true, true, true, true }
         };
 
-        // 4x1 thanh dọc
-        boolean[][] col4 = {
-                { true },
-                { true },
-                { true },
-                { true }
-        };
-
         // 1x3 thanh ngang
         boolean[][] bar3 = {
                 { true, true, true }
         };
 
-        // Khối chữ L
-        boolean[][] shapeL = {
-                { true, false, false },
-                { true, true, true }
-        };
-
-        // Khối chữ T
-        boolean[][] shapeT = {
-                { true, true, true },
-                { false, true, false }
-        };
-
-        // Khối chữ Z
-        boolean[][] shapeZ = {
-                { true, true, false },
-                { false, true, true }
-        };
-
-        // Khối chữ S
-        boolean[][] shapeS = {
-                { false, true, true },
-                { true, true, false }
-        };
-
-        shapePool.add(new Blocks(singleDot, Color.PINK, "single", false));
-        shapePool.add(new Blocks(square2x2, Color.YELLOW, "square2x2", true));
-        shapePool.add(new Blocks(square3x3, Color.SCARLET, "square3x3", false));
-        shapePool.add(new Blocks(bar4, Color.CYAN, "bar4", false));
-        shapePool.add(new Blocks(col4, Color.CYAN, "col4", false));
-        shapePool.add(new Blocks(bar3, Color.ROYAL, "bar3", false));
-        shapePool.add(new Blocks(shapeL, Color.ORANGE, "shapeL", false));
-        shapePool.add(new Blocks(shapeT, Color.PURPLE, "shapeT", false));
-        shapePool.add(new Blocks(shapeZ, Color.RED, "shapeZ", false));
-        shapePool.add(new Blocks(shapeS, Color.GREEN, "shapeS", false));
+        shapePool.add(new Blocks(singleDot, Color.PINK, "single", false, 0, 15));
+        shapePool.add(new Blocks(square2x2, Color.YELLOW, "square2x2", true, 0, 50));
+        shapePool.add(new Blocks(square3x3, Color.SCARLET, "square3x3", false, 0, 120));
+        shapePool.add(new Blocks(bar4, Color.CYAN, "bar4", false, 0, 60));
+        shapePool.add(new Blocks(bar3, Color.ROYAL, "bar3", false, 0, 40));
     }
 
     public void generateCurBlock() {

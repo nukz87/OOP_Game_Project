@@ -14,6 +14,7 @@ import io.github.cuong.entities.Player;
 import io.github.cuong.entities.Guard;
 import io.github.cuong.managers.TimeManager;
 import io.github.cuong.objects.MangoTree;
+import io.github.cuong.objects.Merchant;
 import io.github.cuong.ui.HUD;
 import io.github.cuong.inventory.controller.InventoryController;
 
@@ -27,6 +28,7 @@ public class GameScreen implements Screen {
     private Player player;
     private TimeManager timeManager;
     private MangoTree mangoTree;
+    private Merchant merchant;
     private Guard guard;
     private HUD HUD;
     private InventoryController inventoryController;
@@ -50,6 +52,7 @@ public class GameScreen implements Screen {
         player = new Player(V_WIDTH / 2f, V_HEIGHT / 2f);
         timeManager = new TimeManager();
         mangoTree = new MangoTree(V_WIDTH / 2f, V_HEIGHT / 2f + 40, 30f, 30f);
+        merchant = new Merchant(V_WIDTH / 2f + 85f, V_HEIGHT / 2f + 40f, 30f, 30f);
         guard = new Guard(V_WIDTH / 2f - 200f, V_HEIGHT / 2f);
         HUD = new HUD(V_WIDTH, V_HEIGHT);
 
@@ -59,6 +62,7 @@ public class GameScreen implements Screen {
     @Override
     public void render(float delta) {
         mangoTree.update(delta, player);
+        merchant.update(delta, player);
 
         if (!isInventoryOpen) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
@@ -67,19 +71,22 @@ public class GameScreen implements Screen {
             } else if (mangoTree.isPlayerInRange && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
                 isInventoryOpen = true;
                 inventoryController.openHarvestMenu();
+            } else if (merchant.isPlayerInRange && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                isInventoryOpen = true;
+                inventoryController.openShopMenu();
             }
         } else {
             if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
                 isInventoryOpen = false;
                 inventoryController.close();
             } else if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
-                if (!inventoryController.isShowTray()) {
+                if (!inventoryController.isShowTray() && !inventoryController.isShowShop()) {
                     isInventoryOpen = false;
                     inventoryController.close();
                 } else {
                     inventoryController.openInventoryOnly();
                 }
-            } else if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && inventoryController.isShowTray()) {
+            } else if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && (inventoryController.isShowTray() || inventoryController.isShowShop())) {
                 isInventoryOpen = false;
                 inventoryController.close();
             }
@@ -95,6 +102,10 @@ public class GameScreen implements Screen {
         guard.update(delta, player);
 
         if (isInventoryOpen && inventoryController.isShowTray() && !mangoTree.isPlayerInRange) {
+            isInventoryOpen = false;
+            inventoryController.close();
+        }
+        if (isInventoryOpen && inventoryController.isShowShop() && !merchant.isPlayerInRange) {
             isInventoryOpen = false;
             inventoryController.close();
         }
@@ -117,6 +128,7 @@ public class GameScreen implements Screen {
         game.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         player.render(game.shapeRenderer);
         mangoTree.render(game.shapeRenderer);
+        merchant.render(game.shapeRenderer);
         guard.renderBody(game.shapeRenderer);
         game.shapeRenderer.end();
 
@@ -127,12 +139,20 @@ public class GameScreen implements Screen {
         HUD.renderShapes(game.shapeRenderer, player);
         HUD.renderText(game.batch, game.font, player, timeManager);
 
-        if (!isInventoryOpen && mangoTree.isPlayerInRange) {
-            game.batch.getProjectionMatrix().setToOrtho2D(0, 0, V_WIDTH, V_HEIGHT);
-            game.batch.begin();
-            game.font.setColor(com.badlogic.gdx.graphics.Color.YELLOW);
-            game.font.draw(game.batch, "[SPACE] Hai xoai", V_WIDTH / 2f - 55f, 60f);
-            game.batch.end();
+        if (!isInventoryOpen) {
+            if (mangoTree.isPlayerInRange) {
+                game.batch.getProjectionMatrix().setToOrtho2D(0, 0, V_WIDTH, V_HEIGHT);
+                game.batch.begin();
+                game.font.setColor(com.badlogic.gdx.graphics.Color.YELLOW);
+                game.font.draw(game.batch, "[SPACE] Hai xoai", V_WIDTH / 2f - 55f, 60f);
+                game.batch.end();
+            } else if (merchant.isPlayerInRange) {
+                game.batch.getProjectionMatrix().setToOrtho2D(0, 0, V_WIDTH, V_HEIGHT);
+                game.batch.begin();
+                game.font.setColor(com.badlogic.gdx.graphics.Color.GOLD);
+                game.font.draw(game.batch, "[SPACE] Cua hang (Ban do)", V_WIDTH / 2f - 90f, 60f);
+                game.batch.end();
+            }
         }
     }
 

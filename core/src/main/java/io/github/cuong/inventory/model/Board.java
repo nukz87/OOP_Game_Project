@@ -114,6 +114,24 @@ public class Board {
         rebuildGrid();
     }
 
+    // Xóa khối gạch khỏi bàn cờ (ví dụ khi bán vật phẩm cho thương nhân)
+    public boolean deleteBlock(PlacedBlock pb) {
+        if (pb == null || pb.isFixed()) {
+            return false;
+        }
+        boolean removed = placedBlocks.remove(pb);
+        if (removed) {
+            rebuildGrid();
+        }
+        return removed;
+    }
+
+    // Xóa khối gạch tại vị trí ô (row, col)
+    public boolean deleteBlockAt(int row, int col) {
+        PlacedBlock pb = getBlockAt(row, col);
+        return deleteBlock(pb);
+    }
+
     // Nạp một template kho đồ mới
     public void loadTemplate(InventoryTemplate template) {
         this.currentTemplate = template;

@@ -9,22 +9,34 @@ public class Blocks {
     private final boolean drawAsWholeShape;
     private final int rows;
     private final int cols;
+    private final int rotation;
+    private int price;
 
     public Blocks(boolean[][] blocks, Color color) {
-        this(blocks, color, null, false);
+        this(blocks, color, null, false, 0, 10);
     }
 
     public Blocks(boolean[][] blocks, Color color, String textureName) {
-        this(blocks, color, textureName, false);
+        this(blocks, color, textureName, false, 0, 10);
     }
 
     public Blocks(boolean[][] blocks, Color color, String textureName, boolean drawAsWholeShape) {
+        this(blocks, color, textureName, drawAsWholeShape, 0, 10);
+    }
+
+    public Blocks(boolean[][] blocks, Color color, String textureName, boolean drawAsWholeShape, int rotation) {
+        this(blocks, color, textureName, drawAsWholeShape, rotation, 10);
+    }
+
+    public Blocks(boolean[][] blocks, Color color, String textureName, boolean drawAsWholeShape, int rotation, int price) {
         this.blocks = blocks;
         this.color = color;
         this.textureName = textureName;
         this.drawAsWholeShape = drawAsWholeShape;
         this.rows = blocks != null ? blocks.length : 0;
         this.cols = (blocks != null && blocks.length > 0) ? blocks[0].length : 0;
+        this.rotation = ((rotation % 360) + 360) % 360;
+        this.price = price;
     }
 
     public boolean[][] getShape() {
@@ -51,6 +63,18 @@ public class Blocks {
         return this.drawAsWholeShape;
     }
 
+    public int getRotation() {
+        return this.rotation;
+    }
+
+    public int getPrice() {
+        return this.price;
+    }
+
+    public void setPrice(int price) {
+        this.price = price;
+    }
+
     public Blocks rotateClockwise() {
         if (this.blocks == null || this.rows == 0 || this.cols == 0) {
             return this;
@@ -61,6 +85,7 @@ public class Blocks {
                 rotated[c][rows - 1 - r] = this.blocks[r][c];
             }
         }
-        return new Blocks(rotated, this.color, this.textureName, this.drawAsWholeShape);
+        int nextRotation = (this.rotation + 90) % 360;
+        return new Blocks(rotated, this.color, this.textureName, this.drawAsWholeShape, nextRotation, this.price);
     }
 }

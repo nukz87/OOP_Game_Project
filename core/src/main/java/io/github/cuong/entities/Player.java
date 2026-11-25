@@ -26,6 +26,7 @@ public class Player {
 
     // 3. Túi đồ đơn giản
     public int mangoCount = 0;
+    public int gold = 0;
     public Rectangle hitbox;
 
     // Hàm khởi tạo (Constructor): chạy 1 lần khi nhân vật được sinh ra

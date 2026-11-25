@@ -31,9 +31,9 @@ public class ShapeView {
         int rows = shapeLogic.getRows();
         int cols = shapeLogic.getCols();
 
-        // Lấy texture region cho khối này
+        // Lấy texture region cho khối này (kèm góc xoay)
         String textureName = shapeLogic.getTextureName();
-        TextureRegion region = textureName != null ? AssetLoader.getInstance().getTextureRegion(textureName) : null;
+        TextureRegion region = textureName != null ? AssetLoader.getInstance().getTextureRegion(textureName, shapeLogic.getRotation()) : null;
 
         // Fallback to generic block texture
         if (region == null) {
@@ -46,14 +46,11 @@ public class ShapeView {
         // Check if we should draw as a single whole-shape texture
         if (shapeLogic.isDrawAsWholeShape()) {
             // Draw single texture covering the entire shape bounds
-            float totalWidth = cols * cellSize;
-            float totalHeight = rows * cellSize;
-            float drawX = x + gap / 2f;
-            float drawY = y + gap / 2f;
-            float drawWidth = totalWidth - gap;
-            float drawHeight = totalHeight - gap;
-
-            batch.draw(region, drawX, drawY, drawWidth, drawHeight);
+            batch.draw(region,
+                    x + gap / 2f,
+                    y + gap / 2f,
+                    totalWidth - gap,
+                    totalHeight - gap);
         } else {
             // Original per-cell drawing (tile the texture for each cell)
             float drawSize = cellSize - gap;
@@ -71,42 +68,6 @@ public class ShapeView {
                                 drawSize,
                                 drawSize);
                     }
-                }
-            }
-        }
-    }
-
-    // Vẽ highlight (để dùng khi preview đặt khối)
-    public void drawHighlight(SpriteBatch batch, int hoverRow, int hoverCol, boolean canPlace) {
-        boolean[][] layout = shapeLogic.getShape();
-        int rows = shapeLogic.getRows();
-        int cols = shapeLogic.getCols();
-
-        String highlightName = canPlace ? "highlight_ok" : "highlight_fail";
-        TextureRegion highlightRegion = AssetLoader.getInstance().getTextureRegion(highlightName);
-
-        if (highlightRegion == null) {
-            return;
-        }
-
-        float cellSize = GameConfig.CELL_SIZE;
-        float gap = GameConfig.CELL_GAP;
-        float drawSize = cellSize - gap;
-
-        for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < cols; c++) {
-                if (layout[r][c]) {
-                    int tr = hoverRow + r;
-                    int tc = hoverCol + c;
-
-                    float blockX = GameConfig.BOARD_START_X + tc * cellSize;
-                    float blockY = GameConfig.BOARD_START_Y + (GameConfig.BOARD_ROWS - 1 - tr) * cellSize;
-
-                    batch.draw(highlightRegion,
-                            blockX + gap / 2f,
-                            blockY + gap / 2f,
-                            drawSize,
-                            drawSize);
                 }
             }
         }

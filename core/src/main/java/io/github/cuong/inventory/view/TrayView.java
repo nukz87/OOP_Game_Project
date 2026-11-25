@@ -70,12 +70,6 @@ public class TrayView {
         }
     }
 
-    // Legacy method for backward compatibility (if needed)
-    public void draw(ShapeRenderer shapeRenderer) {
-        drawBackground(shapeRenderer);
-        // Note: shapes are now drawn with SpriteBatch, not here
-    }
-
     public ShapeView getTouchedShape(float mouseX, float mouseY) {
         for (ShapeView sv : shapeViews) {
             if (sv.contains(mouseX, mouseY)) {
