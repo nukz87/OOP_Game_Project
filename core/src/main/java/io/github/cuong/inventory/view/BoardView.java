@@ -23,10 +23,6 @@ public class BoardView {
         this.boardLogic = boardLogic;
     }
 
-    public BoardView(Board boardLogic, ShapeRenderer ignored) {
-        this.boardLogic = boardLogic;
-    }
-
     // Vẽ bàn cờ bình thường (không highlight) - chỉ vẽ nền và lưới
     public void draw(ShapeRenderer shapeRenderer) {
         drawWithHighlight(shapeRenderer, -1, -1, null, false);
@@ -55,9 +51,6 @@ public class BoardView {
                 float y = cellPixelY(r);
 
                 Color cellColor = grid[r][c];
-                PlacedBlock pb = boardLogic.getBlockAt(r, c);
-                boolean isFixed = (pb != null && pb.isFixed());
-
                 if (cellColor == null) {
                     shapeRenderer.setColor(emptyCellColor);
                     shapeRenderer.rect(
@@ -74,8 +67,10 @@ public class BoardView {
                             GameConfig.CELL_SIZE - GameConfig.CELL_GAP,
                             GameConfig.CELL_SIZE - GameConfig.CELL_GAP);
 
-                    // Nếu là block cố định: vẽ hiệu ứng chìm (lõi và đinh) - vẫn dùng ShapeRenderer cho UI effect
-                    if (isFixed) {
+                    // Nếu là block cố định: vẽ hiệu ứng chìm (lõi và đinh) - kiểm tra getBlockAt
+                    // chỉ khi ô có màu
+                    PlacedBlock pb = boardLogic.getBlockAt(r, c);
+                    if (pb != null && pb.isFixed()) {
                         shapeRenderer.setColor(fixedInnerColor);
                         float innerGap = 6f;
                         shapeRenderer.rect(
@@ -97,7 +92,8 @@ public class BoardView {
             }
         }
 
-        // 3. Overlay highlight ô sẽ đặt khối (vẫn dùng ShapeRenderer cho highlight tạm thời)
+        // 3. Overlay highlight ô sẽ đặt khối (vẫn dùng ShapeRenderer cho highlight tạm
+        // thời)
         if (hoverBlock != null) {
             boolean[][] shape = hoverBlock.getShape();
             Color hlColor = canPlace ? highlightOk : highlightFail;
@@ -122,71 +118,58 @@ public class BoardView {
 
     // Vẽ các khối đã đặt (placed blocks) với SpriteBatch và textures
     public void drawPlacedBlocks(SpriteBatch batch) {
-        Color[][] grid = boardLogic.getGrid();
-        int rows = boardLogic.getHeight();
-        int cols = boardLogic.getWidth();
-
         float cellSize = GameConfig.CELL_SIZE;
         float gap = GameConfig.CELL_GAP;
 
-        // Track which blocks we've already drawn to avoid drawing the same whole-shape multiple times
-        boolean[][] drawn = new boolean[rows][cols];
+        for (PlacedBlock pb : boardLogic.getPlacedBlocks()) {
+            if (pb.isFixed()) {
+                continue; // Khối cố định đã được vẽ với ShapeRenderer ở nền
+            }
 
-        for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < cols; c++) {
-                if (drawn[r][c]) continue;
+            Blocks block = pb.getBlock();
+            String textureName = block.getTextureName();
+            TextureRegion region = textureName != null
+                    ? AssetLoader.getInstance().getTextureRegion(textureName, block.getRotation())
+                    : null;
 
-                PlacedBlock pb = boardLogic.getBlockAt(r, c);
-                if (pb != null && !pb.isFixed()) {
-                    // Chỉ vẽ các block không cố định (có thể di chuyển) với texture
-                    Blocks block = pb.getBlock();
-                    String textureName = block.getTextureName();
-                    TextureRegion region = textureName != null ? AssetLoader.getInstance().getTextureRegion(textureName) : null;
+            if (region == null) {
+                region = AssetLoader.getInstance().getTextureRegion("block");
+            }
 
-                    if (region == null) {
-                        region = AssetLoader.getInstance().getTextureRegion("block");
-                    }
+            if (block.isDrawAsWholeShape()) {
+                // Vẽ cả khối dưới dạng 1 texture bao trùm
+                int blockRows = block.getRows();
+                int blockCols = block.getCols();
+                float totalWidth = blockCols * cellSize;
+                float totalHeight = blockRows * cellSize;
 
-                    // Check if this block should be drawn as a whole shape
-                    if (block.isDrawAsWholeShape()) {
-                        // Draw as single texture covering entire shape
-                        int blockRows = block.getRows();
-                        int blockCols = block.getCols();
-                        float totalWidth = blockCols * cellSize;
-                        float totalHeight = blockRows * cellSize;
+                float x = cellPixelX(pb.getCol());
+                float y = cellPixelY(pb.getRow() + blockRows - 1);
 
-                        // Get the top-left cell of this placed block
-                        float x = cellPixelX(pb.getCol());
-                        float y = cellPixelY(pb.getRow() + blockRows - 1);
+                batch.draw(region,
+                        x + gap / 2f,
+                        y + gap / 2f,
+                        totalWidth - gap,
+                        totalHeight - gap);
+            } else {
+                // Vẽ từng ô gạch con
+                boolean[][] shape = block.getShape();
+                float drawSize = cellSize - gap;
+                int blockRows = block.getRows();
+                int blockCols = block.getCols();
 
-                        batch.draw(region,
-                                x + gap / 2f,
-                                y + gap / 2f,
-                                totalWidth - gap,
-                                totalHeight - gap);
+                for (int br = 0; br < blockRows; br++) {
+                    for (int bc = 0; bc < blockCols; bc++) {
+                        if (shape[br][bc]) {
+                            float x = cellPixelX(pb.getCol() + bc);
+                            float y = cellPixelY(pb.getRow() + br);
 
-                        // Mark all cells of this block as drawn
-                        for (int br = 0; br < blockRows; br++) {
-                            for (int bc = 0; bc < blockCols; bc++) {
-                                int gr = pb.getRow() + br;
-                                int gc = pb.getCol() + bc;
-                                if (gr >= 0 && gr < rows && gc >= 0 && gc < cols) {
-                                    drawn[gr][gc] = true;
-                                }
-                            }
+                            batch.draw(region,
+                                    x + gap / 2f,
+                                    y + gap / 2f,
+                                    drawSize,
+                                    drawSize);
                         }
-                    } else {
-                        // Original per-cell drawing
-                        float drawSize = cellSize - gap;
-                        float x = cellPixelX(c);
-                        float y = cellPixelY(r);
-
-                        batch.draw(region,
-                                x + gap / 2f,
-                                y + gap / 2f,
-                                drawSize,
-                                drawSize);
-                        drawn[r][c] = true;
                     }
                 }
             }
@@ -202,7 +185,7 @@ public class BoardView {
         return GameConfig.BOARD_START_Y + (boardLogic.getHeight() - 1 - row) * GameConfig.CELL_SIZE;
     }
 
-    // --- Pixel tọa độ góc dưới-trái của cả khối (tính theo ô trên cùng bên trái) ---
+    // --- Pixel tọa độ góc dưới-trái của cả khối (tính theo ô trên cùng bên trái)
     // ---
     public float colToPixelX(int col) {
         return cellPixelX(col);

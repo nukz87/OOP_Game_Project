@@ -1,6 +1,5 @@
 package io.github.cuong.inventory.controller;
 
-import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
@@ -10,7 +9,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.cuong.inventory.config.GameConfig;
@@ -22,6 +20,7 @@ import io.github.cuong.inventory.model.InventoryTemplates;
 import io.github.cuong.inventory.model.PlacedBlock;
 import io.github.cuong.inventory.view.BoardView;
 import io.github.cuong.inventory.view.ButtonView;
+import io.github.cuong.inventory.view.ShopView;
 import io.github.cuong.entities.Player;
 import io.github.cuong.inventory.view.ShapeView;
 import io.github.cuong.inventory.view.TrayView;
@@ -35,6 +34,7 @@ public class InventoryController {
     private BlocksManager blocksManager;
     private TrayView trayView;
     private ButtonView nextPieceButton;
+    private ShopView shopView;
 
     // Biến quản lý template hiện tại
     private int currentTemplateIndex = 1; // Khởi đầu với Template Bo 4 góc để thấy rõ khối cố định
@@ -42,6 +42,12 @@ public class InventoryController {
     // Biến quản lý hiển thị các phân vùng màn chơi
     private boolean showTray = false;
     private boolean showBoard = false;
+    private boolean showShop = false;
+
+    // Trạng thái hover và thông báo bán hàng
+    private PlacedBlock hoveredBlock = null;
+    private String notificationText = null;
+    private float notificationTimer = 0f;
 
     // Biến quản lý kéo-thả: dùng chung cho cả khối từ khay lẫn khối đã đặt
     private ShapeView selectedShapeView;
@@ -49,6 +55,8 @@ public class InventoryController {
     private float dragOffsetX;
     private float dragOffsetY;
     private final Vector3 touchPos = new Vector3();
+    private float mouseX;
+    private float mouseY;
 
     private boolean isGameOver = false;
     private Player player;
@@ -71,6 +79,7 @@ public class InventoryController {
 
         this.boardView = new BoardView(board);
         this.trayView = new TrayView();
+        this.shopView = new ShopView();
         this.nextPieceButton = new ButtonView(
                 GameConfig.BUTTON_X, GameConfig.BUTTON_Y,
                 GameConfig.BUTTON_WIDTH, GameConfig.BUTTON_HEIGHT,
@@ -85,18 +94,28 @@ public class InventoryController {
         cancelDrag();
         this.showBoard = true;
         this.showTray = false;
+        this.showShop = false;
     }
 
     public void openHarvestMenu() {
         cancelDrag();
         this.showBoard = true;
         this.showTray = true;
+        this.showShop = false;
+    }
+
+    public void openShopMenu() {
+        cancelDrag();
+        this.showBoard = true;
+        this.showTray = false;
+        this.showShop = true;
     }
 
     public void close() {
         cancelDrag();
         this.showBoard = false;
         this.showTray = false;
+        this.showShop = false;
     }
 
     public boolean isShowTray() {
@@ -107,12 +126,37 @@ public class InventoryController {
         return showBoard;
     }
 
+    public boolean isShowShop() {
+        return showShop;
+    }
+
+    public boolean sellBlock(PlacedBlock pb) {
+        if (pb == null || pb.isFixed()) {
+            return false;
+        }
+        int price = pb.getBlock().getPrice();
+        boolean removed = board.deleteBlock(pb);
+        if (removed) {
+            if (player != null) {
+                player.gold += price;
+            }
+            String itemName = pb.getBlock().getTextureName() != null ? pb.getBlock().getTextureName().toUpperCase() : "VAT PHAM";
+            notificationText = "Da ban " + itemName + ": +" + price + " G";
+            notificationTimer = 2.5f;
+            return true;
+        }
+        return false;
+    }
+
     private void spawnNextBlock() {
         blocksManager.generateCurBlock();
         trayView.updateTray(blocksManager.getCurBlock());
     }
 
     public void update(float delta) {
+        if (notificationTimer > 0f) {
+            notificationTimer -= delta;
+        }
         handleInput();
     }
 
@@ -144,8 +188,11 @@ public class InventoryController {
             }
         }
 
-        // 2. Vẽ phần Tray và nút tạo block (nếu được bật) - backgrounds with ShapeRenderer
-        if (showTray) {
+        // 2. Vẽ phần ShopView hoặc Tray & Button (phía bên trái)
+        if (showShop) {
+            boolean isHoveringShop = shopView.isInsideShopPanel(mouseX, mouseY);
+            shopView.drawBackground(shapeRenderer, isHoveringShop, hoveredBlock);
+        } else if (showTray) {
             trayView.drawBackground(shapeRenderer);
             nextPieceButton.drawShape(shapeRenderer);
         }
@@ -161,19 +208,17 @@ public class InventoryController {
             boardView.drawPlacedBlocks(batch);
         }
 
-        // 2. Vẽ khối trong khay
-        if (showTray) {
+        // 2. Vẽ nội dung bên trái (ShopView hoặc TrayView)
+        if (showShop) {
+            shopView.drawTextAndAvatar(batch, font, hoveredBlock, player != null ? player.gold : 0, notificationText, notificationTimer);
+        } else if (showTray) {
             trayView.drawShapes(batch);
+            nextPieceButton.drawText(batch, font);
         }
 
         // 3. Vẽ khối đang được kéo nằm trên cùng (lớp trên hết)
         if (selectedShapeView != null) {
             selectedShapeView.draw(batch);
-        }
-
-        // Vẽ chữ của nút bấm nếu tray & button hiển thị
-        if (showTray) {
-            nextPieceButton.drawText(batch, font);
         }
 
         // Vẽ tiêu đề INVENTORY và Template nếu board hiển thị
@@ -194,7 +239,9 @@ public class InventoryController {
 
         // Dòng hướng dẫn phím bấm
         font.setColor(new Color(0.7f, 0.7f, 0.8f, 1f));
-        if (showTray) {
+        if (showShop) {
+            font.draw(batch, "[Chuot Phai / Keo vao Shop] Ban vat pham   [ESC / E / SPACE] Dong", 15f, 30f);
+        } else if (showTray) {
             font.draw(batch, "[T / 1-6] Templates   [R] Rotate   [E] Inventory   [ESC / SPACE] Close", 15f, 30f);
         } else {
             font.draw(batch, "[T / 1-6] Templates   [R] Rotate   [E / ESC] Close", 15f, 30f);
@@ -211,10 +258,35 @@ public class InventoryController {
     private void handleInput() {
         touchPos.set(Gdx.input.getX(), Gdx.input.getY(), 0);
         viewport.unproject(touchPos);
-        float mouseX = touchPos.x;
-        float mouseY = touchPos.y;
+        mouseX = touchPos.x;
+        mouseY = touchPos.y;
 
+        // Cap nhat khoi duoc hover khi o che do Shop
+        hoveredBlock = null;
+        if (showShop) {
+            if (selectedShapeView != null && draggedPlacedBlock != null) {
+                hoveredBlock = draggedPlacedBlock;
+            } else {
+                int hoverRow = boardView.pixelToRow(mouseY, 1);
+                int hoverCol = boardView.pixelToCol(mouseX);
+                if (hoverRow >= 0 && hoverRow < GameConfig.BOARD_ROWS &&
+                        hoverCol >= 0 && hoverCol < GameConfig.BOARD_COLS) {
+                    PlacedBlock pb = board.getBlockAt(hoverRow, hoverCol);
+                    if (pb != null && !pb.isFixed()) {
+                        hoveredBlock = pb;
+                    }
+                }
+            }
 
+            // Click chuot phai vao khoi de ban ngay
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT)) {
+                if (hoveredBlock != null) {
+                    sellBlock(hoveredBlock);
+                    hoveredBlock = null;
+                    return;
+                }
+            }
+        }
 
         // Phím đổi template kho đồ (T: chuyển vòng tròn, 1-6: chọn trực tiếp template)
         if (Gdx.input.isKeyJustPressed(Input.Keys.T)) {
@@ -322,6 +394,14 @@ public class InventoryController {
         } else {
             // Thả chuột
             if (selectedShapeView != null) {
+                // Neu dang o Shop va keo tha vao bang nguoi ban -> BAN!
+                if (showShop && draggedPlacedBlock != null && shopView.isInsideShopPanel(mouseX, mouseY)) {
+                    sellBlock(draggedPlacedBlock);
+                    selectedShapeView = null;
+                    draggedPlacedBlock = null;
+                    return;
+                }
+
                 Blocks blockLogic = selectedShapeView.getShapeLogic();
                 int targetCol = getHoverCol(selectedShapeView);
                 int targetRow = getHoverRow(selectedShapeView);
