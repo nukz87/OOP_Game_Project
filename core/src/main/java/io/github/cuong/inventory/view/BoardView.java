@@ -16,8 +16,6 @@ public class BoardView {
     private final Color gridBorderColor = new Color(0.18f, 0.18f, 0.25f, 1f);
     private final Color highlightOk = new Color(0.2f, 0.9f, 0.2f, 0.55f);
     private final Color highlightFail = new Color(0.9f, 0.2f, 0.2f, 0.55f);
-    private final Color fixedInnerColor = new Color(0.20f, 0.22f, 0.28f, 1f);
-    private final Color fixedRivetColor = new Color(0.60f, 0.63f, 0.70f, 1f);
 
     public BoardView(Board boardLogic) {
         this.boardLogic = boardLogic;
@@ -36,59 +34,42 @@ public class BoardView {
         int rows = boardLogic.getHeight();
         int cols = boardLogic.getWidth();
 
-        // 1. Viền nền bàn cờ
+        // 1. Viền nền chỉ vẽ cho các ô mở (các ô bị khóa/bỏ đi sẽ trong suốt hoàn toàn)
         shapeRenderer.setColor(gridBorderColor);
-        shapeRenderer.rect(
-                GameConfig.BOARD_START_X - 4,
-                GameConfig.BOARD_START_Y - 4,
-                cols * GameConfig.CELL_SIZE + 8,
-                rows * GameConfig.CELL_SIZE + 8);
-
-        // 2. Vẽ từng ô nền (không vẽ block cố định ở đây, sẽ vẽ với SpriteBatch)
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
+                PlacedBlock pb = boardLogic.getBlockAt(r, c);
+                if (pb != null && pb.isFixed()) {
+                    continue;
+                }
+                float x = cellPixelX(c);
+                float y = cellPixelY(r);
+                shapeRenderer.rect(
+                        x - 3f,
+                        y - 3f,
+                        GameConfig.CELL_SIZE + 6f,
+                        GameConfig.CELL_SIZE + 6f);
+            }
+        }
+
+        // 2. Vẽ từng ô nền (bỏ qua hoàn toàn các ô cố định/bị khóa để giữ trong suốt)
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                PlacedBlock pb = boardLogic.getBlockAt(r, c);
+                if (pb != null && pb.isFixed()) {
+                    continue;
+                }
+
                 float x = cellPixelX(c);
                 float y = cellPixelY(r);
 
                 Color cellColor = grid[r][c];
-                if (cellColor == null) {
-                    shapeRenderer.setColor(emptyCellColor);
-                    shapeRenderer.rect(
-                            x + GameConfig.CELL_GAP / 2f,
-                            y + GameConfig.CELL_GAP / 2f,
-                            GameConfig.CELL_SIZE - GameConfig.CELL_GAP,
-                            GameConfig.CELL_SIZE - GameConfig.CELL_GAP);
-                } else {
-                    // Vẽ nền ô
-                    shapeRenderer.setColor(cellColor);
-                    shapeRenderer.rect(
-                            x + GameConfig.CELL_GAP / 2f,
-                            y + GameConfig.CELL_GAP / 2f,
-                            GameConfig.CELL_SIZE - GameConfig.CELL_GAP,
-                            GameConfig.CELL_SIZE - GameConfig.CELL_GAP);
-
-                    // Nếu là block cố định: vẽ hiệu ứng chìm (lõi và đinh) - kiểm tra getBlockAt
-                    // chỉ khi ô có màu
-                    PlacedBlock pb = boardLogic.getBlockAt(r, c);
-                    if (pb != null && pb.isFixed()) {
-                        shapeRenderer.setColor(fixedInnerColor);
-                        float innerGap = 6f;
-                        shapeRenderer.rect(
-                                x + GameConfig.CELL_GAP / 2f + innerGap,
-                                y + GameConfig.CELL_GAP / 2f + innerGap,
-                                GameConfig.CELL_SIZE - GameConfig.CELL_GAP - innerGap * 2,
-                                GameConfig.CELL_SIZE - GameConfig.CELL_GAP - innerGap * 2);
-
-                        shapeRenderer.setColor(fixedRivetColor);
-                        float rSize = 3f;
-                        float pad = 4f;
-                        shapeRenderer.rect(x + pad, y + pad, rSize, rSize);
-                        shapeRenderer.rect(x + GameConfig.CELL_SIZE - pad - rSize, y + pad, rSize, rSize);
-                        shapeRenderer.rect(x + pad, y + GameConfig.CELL_SIZE - pad - rSize, rSize, rSize);
-                        shapeRenderer.rect(x + GameConfig.CELL_SIZE - pad - rSize,
-                                y + GameConfig.CELL_SIZE - pad - rSize, rSize, rSize);
-                    }
-                }
+                shapeRenderer.setColor(cellColor == null ? emptyCellColor : cellColor);
+                shapeRenderer.rect(
+                        x + GameConfig.CELL_GAP / 2f,
+                        y + GameConfig.CELL_GAP / 2f,
+                        GameConfig.CELL_SIZE - GameConfig.CELL_GAP,
+                        GameConfig.CELL_SIZE - GameConfig.CELL_GAP);
             }
         }
 

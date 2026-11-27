@@ -171,13 +171,13 @@ public class GameScreen implements Screen {
                 game.batch.getProjectionMatrix().setToOrtho2D(0, 0, V_WIDTH, V_HEIGHT);
                 game.batch.begin();
                 game.font.setColor(com.badlogic.gdx.graphics.Color.YELLOW);
-                game.font.draw(game.batch, "[SPACE] Hai xoai", V_WIDTH / 2f - 55f, 60f);
+                game.font.draw(game.batch, "[E] Hai xoai", V_WIDTH / 2f - 45f, 60f);
                 game.batch.end();
             } else if (merchant.isPlayerInRange) {
                 game.batch.getProjectionMatrix().setToOrtho2D(0, 0, V_WIDTH, V_HEIGHT);
                 game.batch.begin();
                 game.font.setColor(com.badlogic.gdx.graphics.Color.GOLD);
-                game.font.draw(game.batch, "[SPACE] Cua hang (Ban do)", V_WIDTH / 2f - 90f, 60f);
+                game.font.draw(game.batch, "[E] Cua hang (Ban do)", V_WIDTH / 2f - 80f, 60f);
                 game.batch.end();
             }
         }
