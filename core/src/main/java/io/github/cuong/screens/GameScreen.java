@@ -3,15 +3,15 @@ package io.github.cuong.screens;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -43,12 +43,12 @@ public class GameScreen implements Screen {
     private HUD HUD;
     private InventoryController inventoryController;
     private ScheduleController scheduleController;
-    private BitmapFont vnFont;
 
     private boolean isInventoryOpen = false;
 
     private TiledMap map;
     private OrthogonalTiledMapRenderer mapRenderer;
+    private ScreenViewport hudViewport = new ScreenViewport();
 
     private final Main game;
 
@@ -66,14 +66,7 @@ public class GameScreen implements Screen {
         uiViewport = new FitViewport(V_WIDTH, V_HEIGHT);
         uiViewport.apply(true);
 
-        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("arial.ttf"));
-        FreeTypeFontParameter parameter = new FreeTypeFontParameter();
-        parameter.size = 14;
-        parameter.characters = FreeTypeFontGenerator.DEFAULT_CHARS
-            + "àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ"
-            + "ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ";
-        vnFont = generator.generateFont(parameter);
-        generator.dispose();
+        
 
         player = new Player(V_WIDTH / 2f, V_HEIGHT / 2f);
         timeManager = new TimeManager();
@@ -189,9 +182,6 @@ public class GameScreen implements Screen {
             inventoryController.render(game.shapeRenderer, game.batch, game.font);
         }
 
-        HUD.renderShapes(game.shapeRenderer, player);
-        HUD.renderText(game.batch, game.font, player, timeManager);
-
         if (!isInventoryOpen && !scheduleBlocking) {
             if (mangoTree.isPlayerInRange) {
                 game.batch.getProjectionMatrix().setToOrtho2D(0, 0, V_WIDTH, V_HEIGHT);
@@ -208,10 +198,16 @@ public class GameScreen implements Screen {
             }
         }
 
+        hudViewport.apply();
+        game.batch.setProjectionMatrix(hudViewport.getCamera().combined);
+
+        HUD.renderShapes(game.shapeRenderer, player);
+        HUD.renderText(game.batch, game.font, player, timeManager);
+
         uiViewport.apply();
         game.shapeRenderer.setProjectionMatrix(uiViewport.getCamera().combined);
         game.batch.setProjectionMatrix(uiViewport.getCamera().combined);
-        scheduleController.render(game.shapeRenderer, game.batch, vnFont);
+        scheduleController.render(game.shapeRenderer, game.batch, game.font);
     }
 
     private void drawDebugGrid() {
@@ -230,6 +226,8 @@ public class GameScreen implements Screen {
 
     @Override
     public void resize(int width, int height) {
+
+        hudViewport.update(width, height, true);
         viewport.update(width, height);
         if (uiViewport != null) {
             uiViewport.update(width, height, true);
@@ -255,8 +253,6 @@ public class GameScreen implements Screen {
     public void dispose() {
         map.dispose();
         mapRenderer.dispose();
-        if (vnFont != null) {
-            vnFont.dispose();
-        }
+        
     }
 }
