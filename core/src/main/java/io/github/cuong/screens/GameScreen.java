@@ -67,26 +67,16 @@ public class GameScreen implements Screen {
         if (!isInventoryOpen) {
             if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
                 isInventoryOpen = true;
-                inventoryController.openInventoryOnly();
-            } else if (mangoTree.isPlayerInRange && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-                isInventoryOpen = true;
-                inventoryController.openHarvestMenu();
-            } else if (merchant.isPlayerInRange && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-                isInventoryOpen = true;
-                inventoryController.openShopMenu();
-            }
-        } else {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-                isInventoryOpen = false;
-                inventoryController.close();
-            } else if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
-                if (!inventoryController.isShowTray() && !inventoryController.isShowShop()) {
-                    isInventoryOpen = false;
-                    inventoryController.close();
+                if (mangoTree.isPlayerInRange) {
+                    inventoryController.openHarvestMenu();
+                } else if (merchant.isPlayerInRange) {
+                    inventoryController.openShopMenu();
                 } else {
                     inventoryController.openInventoryOnly();
                 }
-            } else if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && (inventoryController.isShowTray() || inventoryController.isShowShop())) {
+            }
+        } else {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || Gdx.input.isKeyJustPressed(Input.Keys.E)) {
                 isInventoryOpen = false;
                 inventoryController.close();
             }
@@ -100,6 +90,8 @@ public class GameScreen implements Screen {
 
         timeManager.update(delta);
         guard.update(delta, player);
+        mangoTree.update(delta, player);
+        merchant.update(delta, player);
 
         if (isInventoryOpen && inventoryController.isShowTray() && !mangoTree.isPlayerInRange) {
             isInventoryOpen = false;
@@ -144,13 +136,13 @@ public class GameScreen implements Screen {
                 game.batch.getProjectionMatrix().setToOrtho2D(0, 0, V_WIDTH, V_HEIGHT);
                 game.batch.begin();
                 game.font.setColor(com.badlogic.gdx.graphics.Color.YELLOW);
-                game.font.draw(game.batch, "[SPACE] Hai xoai", V_WIDTH / 2f - 55f, 60f);
+                game.font.draw(game.batch, "[E] Hai xoai", V_WIDTH / 2f - 45f, 60f);
                 game.batch.end();
             } else if (merchant.isPlayerInRange) {
                 game.batch.getProjectionMatrix().setToOrtho2D(0, 0, V_WIDTH, V_HEIGHT);
                 game.batch.begin();
                 game.font.setColor(com.badlogic.gdx.graphics.Color.GOLD);
-                game.font.draw(game.batch, "[SPACE] Cua hang (Ban do)", V_WIDTH / 2f - 90f, 60f);
+                game.font.draw(game.batch, "[E] Cua hang (Ban do)", V_WIDTH / 2f - 80f, 60f);
                 game.batch.end();
             }
         }

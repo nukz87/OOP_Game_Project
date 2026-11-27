@@ -27,6 +27,7 @@ public class Player {
     // 3. Túi đồ đơn giản
     public int mangoCount = 0;
     public int gold = 0;
+    public int inventoryTemplateIndex = 0; // Chỉ số template túi đồ của người chơi (0..5)
     public Rectangle hitbox;
 
     // Hàm khởi tạo (Constructor): chạy 1 lần khi nhân vật được sinh ra
@@ -101,6 +102,14 @@ public class Player {
 
     public void updateMango() {
         this.mangoCount++;
+    }
+
+    public int getInventoryTemplateIndex() {
+        return inventoryTemplateIndex;
+    }
+
+    public void setInventoryTemplateIndex(int inventoryTemplateIndex) {
+        this.inventoryTemplateIndex = inventoryTemplateIndex;
     }
 
     // Tạm thời vẽ nhân vật bằng hình khối (ShapeRenderer) để kiểm tra logic trước
