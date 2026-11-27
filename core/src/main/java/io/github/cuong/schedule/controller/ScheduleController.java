@@ -32,8 +32,12 @@ public class ScheduleController {
     }
 
     public void handleInput(Viewport viewport) {
-        if (manager.isConfirmed() && Gdx.input.isKeyJustPressed(Input.Keys.T)) {
-            isOverlayOpen = !isOverlayOpen;
+        if (manager.isConfirmed()) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.T)) {
+                isOverlayOpen = !isOverlayOpen;
+            } else if (isOverlayOpen && Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+                isOverlayOpen = false;
+            }
         }
 
         touchPos.set(Gdx.input.getX(), Gdx.input.getY());
@@ -41,7 +45,6 @@ public class ScheduleController {
 
         if (!manager.isConfirmed()) {
             if (Gdx.input.justTouched()) {
-                // 1. Kiểm tra bấm nút Xóa nhỏ [x] trên khối môn đã xếp
                 Array<CourseSession> sessions = manager.getSessions();
                 for (int i = sessions.size - 1; i >= 0; i--) {
                     CourseSession cs = sessions.get(i);
@@ -53,21 +56,18 @@ public class ScheduleController {
                         manager.removeSubject(subIdx);
                         return;
                     }
-                    // 2. Bắt đầu kéo một khối môn đã nằm trên lưới để di chuyển vị trí
                     if (cr.contains(touchPos.x, touchPos.y)) {
                         draggingSubjectIdx = subIdx;
                         return;
                     }
                 }
 
-                // 3. Bắt đầu kéo thẻ môn từ danh sách bên trái
                 int cardIdx = setupView.getCardSubjectAt(touchPos.x, touchPos.y);
                 if (cardIdx != -1) {
                     draggingSubjectIdx = cardIdx;
                     return;
                 }
 
-                // 4. Các nút chức năng phía dưới
                 if (setupView.isClearClicked(touchPos.x, touchPos.y)) {
                     manager.clearAll();
                 } else if (setupView.isAutoFillClicked(touchPos.x, touchPos.y)) {
@@ -76,7 +76,6 @@ public class ScheduleController {
                     manager.setConfirmed(true);
                 }
             } else if (!Gdx.input.isTouched() && draggingSubjectIdx != -1) {
-                // 5. Thả chuột -> đặt môn vào ô tiết trên lưới
                 int[] cell = setupView.getGridCellAt(touchPos.x, touchPos.y);
                 if (cell != null) {
                     manager.placeSubject(draggingSubjectIdx, cell[0], cell[1]);
@@ -88,8 +87,8 @@ public class ScheduleController {
 
         if (!Gdx.input.justTouched()) return;
 
-        if (overlayView.isToggleClicked(touchPos.x, touchPos.y)) {
-            isOverlayOpen = !isOverlayOpen;
+        if (!isOverlayOpen && overlayView.isToggleClicked(touchPos.x, touchPos.y)) {
+            isOverlayOpen = true;
         } else if (isOverlayOpen && overlayView.isCloseClicked(touchPos.x, touchPos.y)) {
             isOverlayOpen = false;
         }
@@ -109,25 +108,27 @@ public class ScheduleController {
             setupView.drawText(batch, font, manager, draggingSubjectIdx, touchPos.x, touchPos.y);
             batch.end();
         } else {
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-            overlayView.drawToggleButtonShape(shapeRenderer, isOverlayOpen);
-            if (isOverlayOpen) {
-                overlayView.drawPopupShapes(shapeRenderer, manager);
-            }
-            shapeRenderer.end();
+            if (!isOverlayOpen) {
+                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                overlayView.drawToggleButtonShape(shapeRenderer, false);
+                shapeRenderer.end();
 
-            if (isOverlayOpen) {
+                batch.begin();
+                overlayView.drawToggleButtonText(batch, font, false);
+                batch.end();
+            } else {
+                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                overlayView.drawPopupShapes(shapeRenderer, manager);
+                shapeRenderer.end();
+
                 shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
                 overlayView.drawPopupBorders(shapeRenderer);
                 shapeRenderer.end();
-            }
 
-            batch.begin();
-            overlayView.drawToggleButtonText(batch, font, isOverlayOpen);
-            if (isOverlayOpen) {
+                batch.begin();
                 overlayView.drawPopupText(batch, font, manager);
+                batch.end();
             }
-            batch.end();
         }
     }
 

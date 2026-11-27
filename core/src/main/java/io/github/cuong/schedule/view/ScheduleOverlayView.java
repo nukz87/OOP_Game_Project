@@ -25,16 +25,16 @@ public class ScheduleOverlayView {
     private final float rowHeight;
 
     public ScheduleOverlayView(float worldWidth, float worldHeight) {
-        toggleButton = new Rectangle(worldWidth - 260f, worldHeight - 44f, 105f, 32f);
+        toggleButton = new Rectangle(worldWidth - 275f, worldHeight - 44f, 120f, 32f);
 
         float w = worldWidth * 0.86f;
         float h = worldHeight * 0.88f;
         popupBounds = new Rectangle((worldWidth - w) / 2f, (worldHeight - h) / 2f, w, h);
 
         closeButton = new Rectangle(
-            popupBounds.x + popupBounds.width - 96f,
+            popupBounds.x + popupBounds.width - 142f,
             popupBounds.y + popupBounds.height - 32f,
-            84f,
+            130f,
             24f
         );
 
@@ -50,7 +50,7 @@ public class ScheduleOverlayView {
 
     public void drawToggleButtonText(SpriteBatch batch, BitmapFont font, boolean isOpen) {
         font.setColor(Color.WHITE);
-        font.draw(batch, isOpen ? "ĐÓNG TKB" : "XEM TKB", toggleButton.x + 15f, toggleButton.y + 22f);
+        font.draw(batch, isOpen ? "[T / ESC] ĐÓNG" : "[T] XEM TKB", toggleButton.x + 14f, toggleButton.y + 22f);
     }
 
     public void drawPopupShapes(ShapeRenderer sr, ScheduleManager manager) {
@@ -122,7 +122,7 @@ public class ScheduleOverlayView {
     public void drawPopupText(SpriteBatch batch, BitmapFont font, ScheduleManager manager) {
         font.setColor(Color.WHITE);
         font.draw(batch, "HUST - THỜI KHÓA BIỂU CÁ NHÂN", popupBounds.x + 16f, popupBounds.y + popupBounds.height - 13f);
-        font.draw(batch, "ĐÓNG [X]", closeButton.x + 12f, closeButton.y + 17f);
+        font.draw(batch, "[T / ESC] ĐÓNG", closeButton.x + 11f, closeButton.y + 17f);
 
         font.draw(batch, "Tiết", gridBounds.x + 14f, gridBounds.y + gridBounds.height - 8f);
         for (int d = 0; d < 3; d++) {
