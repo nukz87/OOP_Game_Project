@@ -131,6 +131,7 @@ public class Guard {
         // playerCatched = true;
         player.mangoCount = 0;
         player.position.set(50f, 50f);
+        player.hitbox.setPosition(player.position.x, player.position.y);
     }
 
     public void renderBody(ShapeRenderer shapeRenderer) {
