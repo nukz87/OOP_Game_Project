@@ -9,8 +9,13 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 
 import io.github.cuong.Main;
 import io.github.cuong.entities.Player;
@@ -41,6 +46,9 @@ public class GameScreen implements Screen {
     private BitmapFont vnFont;
 
     private boolean isInventoryOpen = false;
+
+    private TiledMap map;
+    private OrthogonalTiledMapRenderer mapRenderer;
 
     private final Main game;
 
@@ -75,6 +83,13 @@ public class GameScreen implements Screen {
         HUD = new HUD(V_WIDTH, V_HEIGHT);
 
         inventoryController = new InventoryController(player);
+
+        TmxMapLoader.Parameters params = new TmxMapLoader.Parameters();
+        params.textureMinFilter = Texture.TextureFilter.Nearest;
+        params.textureMagFilter = Texture.TextureFilter.Nearest;
+
+        map = new TmxMapLoader().load("map/untitled.tmx", params);
+        mapRenderer = new OrthogonalTiledMapRenderer(map);
         scheduleController = new ScheduleController(V_WIDTH, V_HEIGHT);
     }
 
@@ -137,18 +152,29 @@ public class GameScreen implements Screen {
             }
         }
 
-        float lerp = 5.0f;
+        ScreenUtils.clear(0, 0, 0, 1);
+
+        float lerp = 5.0f; // Tốc độ bám theo của camera
         camera.position.x += (player.position.x - camera.position.x) * lerp * delta;
         camera.position.y += (player.position.y - camera.position.y) * lerp * delta;
         camera.update();
 
-        Gdx.gl.glClearColor(0.12f, 0.12f, 0.15f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        float pad = 64f;
+        float viewWidth = camera.viewportWidth * camera.zoom + pad * 2;
+        float viewHeight = camera.viewportHeight * camera.zoom + pad * 2;
+        float viewX = camera.position.x - viewWidth / 2f;
+        float viewY = camera.position.y - viewHeight / 2f;
+
+        mapRenderer.setView(camera.combined, viewX, viewY, viewWidth, viewHeight);
+        mapRenderer.render();
+
+        //Gdx.gl.glClearColor(0.12f, 0.12f, 0.15f, 1f);
+        //Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         game.shapeRenderer.setProjectionMatrix(camera.combined);
 
         game.shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        drawDebugGrid();
+        //drawDebugGrid();
         guard.renderDebug(game.shapeRenderer);
         game.shapeRenderer.end();
 
@@ -227,6 +253,8 @@ public class GameScreen implements Screen {
 
     @Override
     public void dispose() {
+        map.dispose();
+        mapRenderer.dispose();
         if (vnFont != null) {
             vnFont.dispose();
         }
