@@ -5,6 +5,9 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -17,6 +20,7 @@ import io.github.cuong.objects.MangoTree;
 import io.github.cuong.objects.Merchant;
 import io.github.cuong.ui.HUD;
 import io.github.cuong.inventory.controller.InventoryController;
+import io.github.cuong.schedule.controller.ScheduleController;
 
 public class GameScreen implements Screen {
     public static final float V_WIDTH = 800f;
@@ -24,6 +28,7 @@ public class GameScreen implements Screen {
 
     private OrthographicCamera camera;
     private Viewport viewport;
+    private Viewport uiViewport;
 
     private Player player;
     private TimeManager timeManager;
@@ -32,6 +37,8 @@ public class GameScreen implements Screen {
     private Guard guard;
     private HUD HUD;
     private InventoryController inventoryController;
+    private ScheduleController scheduleController;
+    private BitmapFont vnFont;
 
     private boolean isInventoryOpen = false;
 
@@ -43,11 +50,22 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
-
         camera = new OrthographicCamera();
 
         viewport = new FitViewport(V_WIDTH, V_HEIGHT, camera);
         viewport.apply();
+
+        uiViewport = new FitViewport(V_WIDTH, V_HEIGHT);
+        uiViewport.apply(true);
+
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("arial.ttf"));
+        FreeTypeFontParameter parameter = new FreeTypeFontParameter();
+        parameter.size = 14;
+        parameter.characters = FreeTypeFontGenerator.DEFAULT_CHARS
+            + "àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ"
+            + "ÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐ";
+        vnFont = generator.generateFont(parameter);
+        generator.dispose();
 
         player = new Player(V_WIDTH / 2f, V_HEIGHT / 2f);
         timeManager = new TimeManager();
@@ -57,52 +75,69 @@ public class GameScreen implements Screen {
         HUD = new HUD(V_WIDTH, V_HEIGHT);
 
         inventoryController = new InventoryController(player);
+        scheduleController = new ScheduleController(V_WIDTH, V_HEIGHT);
     }
 
     @Override
     public void render(float delta) {
-        mangoTree.update(delta, player);
-        merchant.update(delta, player);
-
         if (!isInventoryOpen) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
-                isInventoryOpen = true;
-                if (mangoTree.isPlayerInRange) {
-                    inventoryController.openHarvestMenu();
-                } else if (merchant.isPlayerInRange) {
-                    inventoryController.openShopMenu();
-                } else {
+            scheduleController.handleInput(uiViewport);
+        }
+
+        boolean scheduleBlocking = scheduleController.isBlockingGameplay();
+
+        if (!scheduleBlocking) {
+            mangoTree.update(delta, player);
+            merchant.update(delta, player);
+
+            if (!isInventoryOpen) {
+                if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+                    isInventoryOpen = true;
                     inventoryController.openInventoryOnly();
+                } else if (mangoTree.isPlayerInRange && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                    isInventoryOpen = true;
+                    inventoryController.openHarvestMenu();
+                } else if (merchant.isPlayerInRange && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                    isInventoryOpen = true;
+                    inventoryController.openShopMenu();
+                }
+            } else {
+                if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+                    isInventoryOpen = false;
+                    inventoryController.close();
+                } else if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+                    if (!inventoryController.isShowTray() && !inventoryController.isShowShop()) {
+                        isInventoryOpen = false;
+                        inventoryController.close();
+                    } else {
+                        inventoryController.openInventoryOnly();
+                    }
+                } else if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && (inventoryController.isShowTray() || inventoryController.isShowShop())) {
+                    isInventoryOpen = false;
+                    inventoryController.close();
                 }
             }
-        } else {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+
+            if (!isInventoryOpen) {
+                player.update(delta);
+            } else {
+                inventoryController.update(delta);
+            }
+
+            timeManager.update(delta);
+            guard.update(delta, player);
+
+            if (isInventoryOpen && inventoryController.isShowTray() && !mangoTree.isPlayerInRange) {
+                isInventoryOpen = false;
+                inventoryController.close();
+            }
+            if (isInventoryOpen && inventoryController.isShowShop() && !merchant.isPlayerInRange) {
                 isInventoryOpen = false;
                 inventoryController.close();
             }
         }
 
-        if (!isInventoryOpen) {
-            player.update(delta);
-        } else {
-            inventoryController.update(delta);
-        }
-
-        timeManager.update(delta);
-        guard.update(delta, player);
-        mangoTree.update(delta, player);
-        merchant.update(delta, player);
-
-        if (isInventoryOpen && inventoryController.isShowTray() && !mangoTree.isPlayerInRange) {
-            isInventoryOpen = false;
-            inventoryController.close();
-        }
-        if (isInventoryOpen && inventoryController.isShowShop() && !merchant.isPlayerInRange) {
-            isInventoryOpen = false;
-            inventoryController.close();
-        }
-
-        float lerp = 5.0f; // Tốc độ bám theo của camera
+        float lerp = 5.0f;
         camera.position.x += (player.position.x - camera.position.x) * lerp * delta;
         camera.position.y += (player.position.y - camera.position.y) * lerp * delta;
         camera.update();
@@ -131,7 +166,7 @@ public class GameScreen implements Screen {
         HUD.renderShapes(game.shapeRenderer, player);
         HUD.renderText(game.batch, game.font, player, timeManager);
 
-        if (!isInventoryOpen) {
+        if (!isInventoryOpen && !scheduleBlocking) {
             if (mangoTree.isPlayerInRange) {
                 game.batch.getProjectionMatrix().setToOrtho2D(0, 0, V_WIDTH, V_HEIGHT);
                 game.batch.begin();
@@ -146,6 +181,11 @@ public class GameScreen implements Screen {
                 game.batch.end();
             }
         }
+
+        uiViewport.apply();
+        game.shapeRenderer.setProjectionMatrix(uiViewport.getCamera().combined);
+        game.batch.setProjectionMatrix(uiViewport.getCamera().combined);
+        scheduleController.render(game.shapeRenderer, game.batch, vnFont);
     }
 
     private void drawDebugGrid() {
@@ -165,6 +205,9 @@ public class GameScreen implements Screen {
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height);
+        if (uiViewport != null) {
+            uiViewport.update(width, height, true);
+        }
         if (inventoryController != null) {
             inventoryController.resize(width, height);
         }
@@ -184,5 +227,8 @@ public class GameScreen implements Screen {
 
     @Override
     public void dispose() {
+        if (vnFont != null) {
+            vnFont.dispose();
+        }
     }
 }
