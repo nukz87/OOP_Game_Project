@@ -38,6 +38,6 @@ public class CourseSession {
     }
 
     public String getPeriodText() {
-        return "Tiết " + startPeriod + " - " + endPeriod + " (" + (endPeriod - startPeriod + 1) + " tiết)";
+        return "Tiết " + startPeriod + "-" + endPeriod + " (" + (endPeriod - startPeriod + 1) + " tiết)";
     }
 }

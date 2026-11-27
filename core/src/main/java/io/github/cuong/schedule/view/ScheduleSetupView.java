@@ -2,6 +2,7 @@ package io.github.cuong.schedule.view;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
@@ -26,10 +27,12 @@ public class ScheduleSetupView {
     private final Rectangle autoFillButton;
     private final Rectangle confirmButton;
 
-    private final float timeColWidth = 52f;
+    private final float timeColWidth = 66f;
     private final float headerHeight = 28f;
     private final float dayColWidth;
     private final float rowHeight;
+
+    private final GlyphLayout statusLayout = new GlyphLayout();
 
     public ScheduleSetupView(float worldWidth, float worldHeight) {
         float w = worldWidth * 0.96f;
@@ -226,6 +229,9 @@ public class ScheduleSetupView {
     }
 
     public void drawText(SpriteBatch batch, BitmapFont font, ScheduleManager manager, int draggingSubIdx, float dragX, float dragY) {
+        float prevScaleX = font.getData().scaleX;
+        float prevScaleY = font.getData().scaleY;
+
         font.setColor(Color.WHITE);
         font.draw(batch, "HUST - XẾP THỜI KHÓA BIỂU", panelBounds.x + 14f, panelBounds.y + panelBounds.height - 12f);
 
@@ -241,23 +247,33 @@ public class ScheduleSetupView {
             String label = placed ? info.shortName : (info.shortName + " (" + info.duration + "t)");
             font.draw(batch, label, r.x + 10f, r.y + 24f);
             if (placed) {
-                font.draw(batch, "[Đã xếp]", r.x + r.width - 58f, r.y + 24f);
+                statusLayout.setText(font, "[Đã xếp]");
+                font.draw(batch, statusLayout, r.x + r.width - statusLayout.width - 8f, r.y + 24f);
             }
         }
 
         font.setColor(Color.WHITE);
-        font.draw(batch, "Tiết", gridBounds.x + 12f, gridBounds.y + gridBounds.height - 8f);
+        statusLayout.setText(font, "Tiết");
+        font.draw(batch, statusLayout, gridBounds.x + (timeColWidth - statusLayout.width) / 2f, gridBounds.y + gridBounds.height - 8f);
         for (int d = 0; d < 3; d++) {
-            float hx = gridBounds.x + timeColWidth + d * dayColWidth + dayColWidth / 2f - 24f;
-            font.draw(batch, "Ngày " + (d + 1), hx, gridBounds.y + gridBounds.height - 8f);
+            String dayTitle = "Ngày " + (d + 1);
+            font.setColor(Color.WHITE);
+            statusLayout.setText(font, dayTitle);
+            float hx = gridBounds.x + timeColWidth + d * dayColWidth + (dayColWidth - statusLayout.width) / 2f;
+            font.draw(batch, statusLayout, hx, gridBounds.y + gridBounds.height - 8f);
         }
 
         float cellsTop = gridBounds.y + gridBounds.height - headerHeight;
+        font.getData().setScale(prevScaleX * 0.85f, prevScaleY * 0.85f);
         for (int r = 0; r < 12; r++) {
-            float ty = cellsTop - r * rowHeight - (rowHeight / 2f) + 5f;
+            String periodLabel = "Tiết " + (r + 1);
             font.setColor(r < 6 ? HUST_DARK_RED : Color.DARK_GRAY);
-            font.draw(batch, "Tiết " + (r + 1), gridBounds.x + 6f, ty);
+            statusLayout.setText(font, periodLabel);
+            float tx = gridBounds.x + (timeColWidth - statusLayout.width) / 2f;
+            float ty = cellsTop - r * rowHeight - (rowHeight - statusLayout.height) / 2f;
+            font.draw(batch, statusLayout, tx, ty);
         }
+        font.getData().setScale(prevScaleX, prevScaleY);
 
         Array<CourseSession> sessions = manager.getSessions();
         for (int i = 0; i < sessions.size; i++) {

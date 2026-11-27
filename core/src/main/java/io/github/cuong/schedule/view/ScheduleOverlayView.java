@@ -2,6 +2,7 @@ package io.github.cuong.schedule.view;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
@@ -19,22 +20,24 @@ public class ScheduleOverlayView {
     private final Rectangle closeButton;
     private final Rectangle gridBounds;
 
-    private final float timeColWidth = 54f;
+    private final float timeColWidth = 66f;
     private final float headerHeight = 28f;
     private final float dayColWidth;
     private final float rowHeight;
 
-    public ScheduleOverlayView(float worldWidth, float worldHeight) {
-        toggleButton = new Rectangle(worldWidth - 275f, worldHeight - 44f, 120f, 32f);
+    private final GlyphLayout layout = new GlyphLayout();
 
-        float w = worldWidth * 0.86f;
-        float h = worldHeight * 0.88f;
+    public ScheduleOverlayView(float worldWidth, float worldHeight) {
+        toggleButton = new Rectangle(worldWidth - 275f, worldHeight - 44f, 125f, 32f);
+
+        float w = worldWidth * 0.88f;
+        float h = worldHeight * 0.94f;
         popupBounds = new Rectangle((worldWidth - w) / 2f, (worldHeight - h) / 2f, w, h);
 
         closeButton = new Rectangle(
-            popupBounds.x + popupBounds.width - 142f,
-            popupBounds.y + popupBounds.height - 32f,
-            130f,
+            popupBounds.x + popupBounds.width - 148f,
+            popupBounds.y + popupBounds.height - 31f,
+            136f,
             24f
         );
 
@@ -50,7 +53,11 @@ public class ScheduleOverlayView {
 
     public void drawToggleButtonText(SpriteBatch batch, BitmapFont font, boolean isOpen) {
         font.setColor(Color.WHITE);
-        font.draw(batch, isOpen ? "[T / ESC] ĐÓNG" : "[T] XEM TKB", toggleButton.x + 14f, toggleButton.y + 22f);
+        String text = isOpen ? "[T/ESC] ĐÓNG" : "[T] XEM TKB";
+        layout.setText(font, text);
+        float tx = toggleButton.x + (toggleButton.width - layout.width) / 2f;
+        float ty = toggleButton.y + (toggleButton.height + layout.height) / 2f;
+        font.draw(batch, layout, tx, ty);
     }
 
     public void drawPopupShapes(ShapeRenderer sr, ScheduleManager manager) {
@@ -120,23 +127,44 @@ public class ScheduleOverlayView {
     }
 
     public void drawPopupText(SpriteBatch batch, BitmapFont font, ScheduleManager manager) {
+        float prevScaleX = font.getData().scaleX;
+        float prevScaleY = font.getData().scaleY;
+
         font.setColor(Color.WHITE);
         font.draw(batch, "HUST - THỜI KHÓA BIỂU CÁ NHÂN", popupBounds.x + 16f, popupBounds.y + popupBounds.height - 13f);
-        font.draw(batch, "[T / ESC] ĐÓNG", closeButton.x + 11f, closeButton.y + 17f);
 
-        font.draw(batch, "Tiết", gridBounds.x + 14f, gridBounds.y + gridBounds.height - 8f);
+        font.setColor(Color.WHITE);
+        layout.setText(font, "[T/ESC] ĐÓNG");
+        font.draw(
+            batch,
+            layout,
+            closeButton.x + (closeButton.width - layout.width) / 2f,
+            closeButton.y + (closeButton.height + layout.height) / 2f
+        );
+
+        font.setColor(Color.WHITE);
+        layout.setText(font, "Tiết");
+        font.draw(batch, layout, gridBounds.x + (timeColWidth - layout.width) / 2f, gridBounds.y + gridBounds.height - 8f);
         for (int d = 0; d < 3; d++) {
-            float hx = gridBounds.x + timeColWidth + d * dayColWidth + dayColWidth / 2f - 24f;
-            font.draw(batch, "Ngày " + (d + 1), hx, gridBounds.y + gridBounds.height - 8f);
+            String dayTitle = "Ngày " + (d + 1);
+            font.setColor(Color.WHITE);
+            layout.setText(font, dayTitle);
+            float hx = gridBounds.x + timeColWidth + d * dayColWidth + (dayColWidth - layout.width) / 2f;
+            font.draw(batch, layout, hx, gridBounds.y + gridBounds.height - 8f);
         }
 
         float cellsTop = gridBounds.y + gridBounds.height - headerHeight;
+        font.getData().setScale(prevScaleX * 0.85f, prevScaleY * 0.85f);
         for (int r = 0; r < 12; r++) {
-            float ty = cellsTop - r * rowHeight - (rowHeight / 2f) + 5f;
+            String periodLabel = "Tiết " + (r + 1);
             font.setColor(r < 6 ? HUST_DARK_RED : Color.DARK_GRAY);
-            font.draw(batch, "Tiết " + (r + 1), gridBounds.x + 8f, ty);
+            layout.setText(font, periodLabel);
+            float tx = gridBounds.x + (timeColWidth - layout.width) / 2f;
+            float ty = cellsTop - r * rowHeight - (rowHeight - layout.height) / 2f;
+            font.draw(batch, layout, tx, ty);
         }
 
+        font.getData().setScale(prevScaleX * 0.90f, prevScaleY * 0.90f);
         Array<CourseSession> sessions = manager.getSessions();
         for (int i = 0; i < sessions.size; i++) {
             CourseSession cs = sessions.get(i);
@@ -151,9 +179,11 @@ public class ScheduleOverlayView {
 
             String name = (subIdx != -1) ? ScheduleManager.SUBJECTS[subIdx].shortName : cs.getSubjectName();
             font.setColor(Color.WHITE);
-            font.draw(batch, name + " - " + cs.getRoomText(), x + 8f, y + h - 7f);
-            font.draw(batch, cs.getPeriodText(), x + 8f, y + 16f);
+            font.draw(batch, name + " - " + cs.getRoomText(), x + 6f, y + h - 7f);
+            font.draw(batch, cs.getPeriodText(), x + 6f, y + 15f);
         }
+
+        font.getData().setScale(prevScaleX, prevScaleY);
     }
 
     public boolean isToggleClicked(float x, float y) { return toggleButton.contains(x, y); }

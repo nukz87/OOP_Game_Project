@@ -24,7 +24,7 @@ public class ScheduleManager {
         new SubjectInfo("Đại số", "Đại số", 3, new Color(0.18f, 0.62f, 0.52f, 1f)),
         new SubjectInfo("OOP", "OOP", 3, new Color(0.24f, 0.56f, 0.84f, 1f)),
         new SubjectInfo("Xác suất Thống kê", "Xác suất TK", 2, new Color(0.32f, 0.68f, 0.42f, 1f)),
-        new SubjectInfo("Triết học Mác - Lênin", "Triết Mác - Lênin", 2, new Color(0.54f, 0.36f, 0.76f, 1f)),
+        new SubjectInfo("Triết học Mác - Lênin", "Triết Mác-Lênin", 2, new Color(0.54f, 0.36f, 0.76f, 1f)),
         new SubjectInfo("Vật lý Đại cương II", "Vật lý ĐC II", 2, new Color(0.84f, 0.44f, 0.22f, 1f))
     };
 
