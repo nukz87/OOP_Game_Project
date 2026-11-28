@@ -3,13 +3,15 @@ package io.github.cuong.entities;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 
 public class Player {
     public Vector2 position;
-    public float width = 32f;
-    public float height = 32f;
+    public float width = 64f;
+    public float height = 64f;
 
     // 2. Tốc độ và thể lực
     private final float WALK_SPEED = 150f;
@@ -26,17 +28,29 @@ public class Player {
     public int mangoCount = 0;
     public int gold = 0;
     public int inventoryTemplateIndex = 0;
+    private static final float IDLE_TRIGGER_DELAY = 7f;
+
     public Rectangle hitbox;
+    public PlayerState state = PlayerState.BASE;
+    public Direction4 facingDirection = Direction4.DOWN;
+    private float stationaryTimer = 0f;
+    private final PlayerAnimator animator;
 
     public Player(float startX, float startY) {
         this.position = new Vector2(startX, startY);
         this.hitbox = new Rectangle(position.x, position.y, width, height);
+        this.animator = new PlayerAnimator();
     }
 
     public void update(float delta) {
         handleMovement(delta);
         handleStamina(delta);
         hitbox.setPosition(position.x, position.y);
+        animator.update(delta, state, facingDirection);
+        if (state == PlayerState.IDLE && animator.isIdleFinished()) {
+            state = PlayerState.BASE;
+            stationaryTimer = 0f;
+        }
     }
 
     private void handleMovement(float delta) {
@@ -63,6 +77,19 @@ public class Player {
 
             position.x += direction.x * currentSpeed * delta;
             position.y += direction.y * currentSpeed * delta;
+
+            stationaryTimer = 0f;
+            facingDirection = Direction4.fromVector(moveX, moveY);
+            state = isRunning ? PlayerState.RUN : PlayerState.WALK;
+        } else if (state == PlayerState.WALK || state == PlayerState.RUN) {
+            state = PlayerState.BASE;
+            stationaryTimer = 0f;
+        } else if (state == PlayerState.BASE) {
+            stationaryTimer += delta;
+            if (stationaryTimer >= IDLE_TRIGGER_DELAY) {
+                state = PlayerState.IDLE;
+                stationaryTimer = 0f;
+            }
         }
     }
 
@@ -100,9 +127,18 @@ public class Player {
         this.inventoryTemplateIndex = inventoryTemplateIndex;
     }
 
+    public void render(SpriteBatch batch) {
+        TextureRegion frame = animator.getCurrentFrame();
+        if (frame != null) {
+            batch.draw(frame, position.x, position.y, width, height);
+        }
+    }
+
     public void render(ShapeRenderer shapeRenderer) {
-        shapeRenderer.setColor(0.2f, 0.6f, 1f, 1f);
-        shapeRenderer.rect(position.x, position.y, width, height);
+        if (!animator.hasLoadedFrames() || animator.getCurrentFrame() == null) {
+            shapeRenderer.setColor(0.2f, 0.6f, 1f, 1f);
+            shapeRenderer.rect(position.x, position.y, width, height);
+        }
 
         float barWidth = 32f;
         float barHeight = 4f;
@@ -113,5 +149,9 @@ public class Player {
 
         shapeRenderer.setColor(0.2f, 0.9f, 0.2f, 1f);
         shapeRenderer.rect(position.x, position.y + height + 6, barWidth * staminaPercent, barHeight);
+    }
+
+    public void dispose() {
+        animator.dispose();
     }
 }

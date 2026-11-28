@@ -101,26 +101,16 @@ public class GameScreen implements Screen {
             if (!isInventoryOpen) {
                 if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
                     isInventoryOpen = true;
-                    inventoryController.openInventoryOnly();
-                } else if (mangoTree.isPlayerInRange && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-                    isInventoryOpen = true;
-                    inventoryController.openHarvestMenu();
-                } else if (merchant.isPlayerInRange && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-                    isInventoryOpen = true;
-                    inventoryController.openShopMenu();
-                }
-            } else {
-                if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-                    isInventoryOpen = false;
-                    inventoryController.close();
-                } else if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
-                    if (!inventoryController.isShowTray() && !inventoryController.isShowShop()) {
-                        isInventoryOpen = false;
-                        inventoryController.close();
+                    if (mangoTree.isPlayerInRange) {
+                        inventoryController.openHarvestMenu();
+                    } else if (merchant.isPlayerInRange) {
+                        inventoryController.openShopMenu();
                     } else {
                         inventoryController.openInventoryOnly();
                     }
-                } else if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && (inventoryController.isShowTray() || inventoryController.isShowShop())) {
+                }
+            } else {
+                if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || Gdx.input.isKeyJustPressed(Input.Keys.E)) {
                     isInventoryOpen = false;
                     inventoryController.close();
                 }
@@ -178,6 +168,11 @@ public class GameScreen implements Screen {
         guard.renderBody(game.shapeRenderer);
         game.shapeRenderer.end();
 
+        game.batch.setProjectionMatrix(camera.combined);
+        game.batch.begin();
+        renderWorldSpritesSorted();
+        game.batch.end();
+
         if (isInventoryOpen) {
             inventoryController.render(game.shapeRenderer, game.batch, game.font);
         }
@@ -208,6 +203,22 @@ public class GameScreen implements Screen {
         game.shapeRenderer.setProjectionMatrix(uiViewport.getCamera().combined);
         game.batch.setProjectionMatrix(uiViewport.getCamera().combined);
         scheduleController.render(game.shapeRenderer, game.batch, game.font);
+    }
+
+    private void renderWorldSpritesSorted() {
+        float[] ys = { mangoTree.positionY, merchant.positionY, player.position.y };
+        Runnable[] draws = {
+                () -> mangoTree.render(game.batch),
+                () -> merchant.render(game.batch),
+                () -> player.render(game.batch)
+        };
+
+        // Draw higher Y first (farther back) and lower Y last (in front)
+        Integer[] order = { 0, 1, 2 };
+        java.util.Arrays.sort(order, (a, b) -> Float.compare(ys[b], ys[a]));
+        for (int idx : order) {
+            draws[idx].run();
+        }
     }
 
     private void drawDebugGrid() {
@@ -251,6 +262,9 @@ public class GameScreen implements Screen {
 
     @Override
     public void dispose() {
+        player.dispose();
+        mangoTree.dispose();
+        merchant.dispose();
         map.dispose();
         mapRenderer.dispose();
         
