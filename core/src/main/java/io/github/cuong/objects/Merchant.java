@@ -1,6 +1,7 @@
 package io.github.cuong.objects;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import io.github.cuong.entities.Player;
@@ -17,6 +18,7 @@ public class Merchant {
 
     private final Rectangle interactArea;
     public boolean isPlayerInRange = false;
+    private final MapObjectSprite sprite;
 
     public Merchant(float positionX, float positionY, float width, float height) {
         this.positionX = positionX;
@@ -24,14 +26,26 @@ public class Merchant {
         this.width = width;
         this.height = height;
         this.interactArea = new Rectangle(positionX - 20f, positionY - 20f, width + 40f, height + 40f);
+        this.sprite = new MapObjectSprite("objects/shop/shop");
     }
 
     public void update(float delta, Player player) {
         isPlayerInRange = interactArea.overlaps(player.hitbox);
+        sprite.update(delta);
     }
 
     public void render(ShapeRenderer shapeRenderer) {
-        shapeRenderer.setColor(Color.GREEN);
-        shapeRenderer.rect(positionX, positionY, width, height);
+        if (!sprite.hasTexture()) {
+            shapeRenderer.setColor(Color.GREEN);
+            shapeRenderer.rect(positionX, positionY, width, height);
+        }
+    }
+
+    public void render(SpriteBatch batch) {
+        sprite.render(batch, positionX, positionY, width, height);
+    }
+
+    public void dispose() {
+        sprite.dispose();
     }
 }
